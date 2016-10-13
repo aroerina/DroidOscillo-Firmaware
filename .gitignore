@@ -1,0 +1,9 @@
+*.[aod]
+*.axf
+*.pdf
+*.dis
+*.bin
+*.map
+.metadata/
+Debug/
+Release/
