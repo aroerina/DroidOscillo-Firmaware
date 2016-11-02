@@ -35,9 +35,9 @@
 #include "app_usbd_cfg.h"
 #include "usbd_rom_api.h"
 #include "boot_mc_shared_mem.h"
-#include "mc_shared_mem.h"
 #include "main_usb_handler.h"
 #include "m0app_init.h"
+#include "mc_shared_mem.h"
 
 /*****************************************************************************
  * Private types/enumerations/variables
@@ -96,13 +96,13 @@ void set_trigger_timer_regs(uint32_t f_adc,uint32_t f_timer,int16_t trigger_pos,
 
 void reset_sampler_main_loop();
 
-
+#define MESSAGE_EEPROM_SEQ_READ 13
 uint8_t UsbReceiveBuffer[HID_EP_OUT_PACKET_SIZE];
 /* HID Interrupt endpoint event handler. */
 //bool running = FALSE;
 uint8_t i2c_buffer[I2C_BUFFER_SIZE];
 uint8_t i2c_send_buffer;
-ErrorCode_t main_usb_handler(USBD_HANDLE_T hUsb, void *data, uint32_t event)
+ErrorCode_t main_usb_handler(USBD_HANDLE_T hUsb, void *usb_data, uint32_t event)
 {
 
 	switch (event) {
@@ -112,8 +112,8 @@ ErrorCode_t main_usb_handler(USBD_HANDLE_T hUsb, void *data, uint32_t event)
 
 	case USB_EVT_OUT:
 			USBD_API->hw->ReadEP(hUsb,HID_EP_OUT, UsbReceiveBuffer);
-			const uint8_t message = UsbReceiveBuffer[0];
-			const uint8_t* data = &UsbReceiveBuffer[1];
+			uint8_t message = UsbReceiveBuffer[0];
+			uint8_t* data = &UsbReceiveBuffer[1];
 
 				switch(message){
 					case DATA_RECEIVED:
@@ -142,12 +142,12 @@ ErrorCode_t main_usb_handler(USBD_HANDLE_T hUsb, void *data, uint32_t event)
 							//		One Shot 設定
 							//
 						} else if (data[0] >= 3) {
+							MCV->OneShotMode = TRUE;
 							if(data[0] == 3) {	// SINGLEモード
 								MCV->RunningMode = RUNMODE_NORMAL;
 							} else if(data[0] == 4){	// FREE SINGLE モード
 								MCV->RunningMode = RUNMODE_FREE;
 							}
-							MCV->OneShotMode = TRUE;
 						}
 
 
@@ -219,18 +219,19 @@ ErrorCode_t main_usb_handler(USBD_HANDLE_T hUsb, void *data, uint32_t event)
 						reset_sampler_main_loop();
 						break;
 
-					case MESSAGE_EEPROM_SEQ_READ:		// EEPROMシーケンシャルリード、アドレス0からnバイト読み出し　最大32byte
-						i2c_send_buffer = I2C_EEPROM_PAGEADDR;
+
+					case MESSAGE_EEPROM_PAGE_WRITE:		// 指定のページに書き込み
+						memcpy(i2c_buffer,data,(I2C_EEPROM_PAGE_SIZE+1));	// I2C書き込みバッファにコピー
+						I2CTransferBlock(I2C_EEPROM_ADDR , i2c_buffer , (I2C_EEPROM_PAGE_SIZE+1) , NULL , 0); // パケット先頭のバイトでページ指定
+						break;
+
+					case MESSAGE_EEPROM_SEQ_READ:
+						i2c_send_buffer = 0;	// word address
 						const uint8_t read_bytes = *data;
 						// interrupt i2cだと割り込みが起動しないからBlockじゃないとダメ
 						I2CTransferBlock(I2C_EEPROM_ADDR, &i2c_send_buffer, 1, i2c_buffer, read_bytes);
 						memcpy(MCV->Buffer,i2c_buffer,read_bytes);	//送信バッファにコピー
-						USBD_API->hw->WriteEP(g_hUsb, HID_EP_IN, (uint8_t*)MCV->Buffer, I2C_EEPROM_PAGE_SIZE);		// USB送信
-						break;
-
-					case MESSAGE_EEPROM_PAGE_WRITE:		// 指定のページに書き込み
-						memcpy(i2c_buffer,data,(I2C_EEPROM_PAGE_SIZE+1));	// I2C書き込みバッファにコピー
-						I2CTransferBlock(I2C_EEPROM_ADDR , i2c_buffer , I2C_EEPROM_PAGE_SIZE , NULL , 0); // パケット先頭のバイトでページ指定
+						USBD_API->hw->WriteEP(g_hUsb, HID_EP_IN, (uint8_t*)MCV->Buffer, read_bytes);		// USB送信
 						break;
 
 

@@ -90,7 +90,7 @@ extern "C"
 #define NUM_ENDPOINT	3
 
 #define HID_EP_IN_PACKET_SIZE	512
-#define HID_EP_OUT_PACKET_SIZE	8
+#define HID_EP_OUT_PACKET_SIZE	16
 #define HID_EP2_OUT_PACKET_SIZE	512
 
 #define EP1_IN_BINTERBAL		4		// 4ms  2^(n-1) * 125u/sec
