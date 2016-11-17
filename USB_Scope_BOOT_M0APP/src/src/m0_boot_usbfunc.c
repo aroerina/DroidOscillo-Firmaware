@@ -128,6 +128,8 @@ ErrorCode_t HID_EP2_Out_Hdlr(USBD_HANDLE_T hUsb, void *data, uint32_t event)
 				received_packet_count = 0;
 				bytes_of_copyed = 0;
 
+//				__SEV();
+
 //				if(received_program_count==2){	// M0APPのプログラムを受信したら
 //					USB_CORE_CTRL_T *pUsbCtrl = (USB_CORE_CTRL_T *) hUsb;
 //					pUsbCtrl->ep_event_hdlr[2] = (USB_EP_HANDLER_T)(MC_EXCODE_INFO->ExfuncAddr[EXFUNC_M0]);	// ep1ハンドラーを書き換え

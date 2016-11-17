@@ -198,7 +198,7 @@ void ResetISR(void) {
     LPC_ADCHS->DESCRIPTOR[0][0] = (1<<31)|(1<<24)|(0b01<<22)|(0x0<<8)|(0b01<<6)|(0<<0);			// use DESCRIPTOR0 only Threshold A Select
 
     // ADCストップ用 MATCH_VALUEを1以上にしないと止まらない
-    LPC_ADCHS->DESCRIPTOR[1][0] = (1<<31)|(1<<24)|(0b01<<22)|(1<<8)|(0b00<<6)|(1<<5)|(1<<3)|(0<<0);	// Power downをONにしても何故かパワーダウンレジスタがONしない
+    LPC_ADCHS->DESCRIPTOR[1][0] = (1<<31)|(1<<24)|(0b01<<22)|(1<<8)|(0b00<<6)|(1<<3)|(0<<0);	// Power downをONにしても何故かパワーダウンレジスタがONしない
     LPC_ADCHS->FIFO_CFG = (8<<1)|(0x1<<0);					// FIFO Fill level = 8 then DMA raise ; Packed Read ON
 
     // Threshold Interrupt Setting
@@ -221,11 +221,11 @@ void ResetISR(void) {
 
 void start_adc(void){
 
-	LPC_ADCHS->POWER_CONTROL |= 1<<17;	// Power switch ON
-	LPC_ADCHS->POWER_DOWN = 0;	// ADC Power ON
+	//LPC_ADCHS->POWER_CONTROL |= 1<<17;	// Power switch ON
+	//LPC_ADCHS->POWER_DOWN = 0;	// ADC Power ON
 	LPC_ADCHS->DSCR_STS = 0;	// change to descriptor0
 	uint32_t i=0;
-	for(i=0;i<2000;i++){			// 変換し始めのサンプルは波形が歪むので捨てる
+	for(i=0;i<100;i++){			// 変換し始めのサンプルは波形が歪むので捨てる
 		LPC_ADCHS->FLUSH = 1;		// FIFO FLUSH
 	}
 	//LPC_GPDMA->CONFIG = 1;
@@ -234,11 +234,12 @@ void start_adc(void){
 }
 
 inline void stop_adc(void){
-	LPC_ADCHS->POWER_CONTROL &= ~(1<<17);	// Power switch OFF
+	//LPC_ADCHS->POWER_CONTROL &= ~(1<<17);	// Power switch OFF
+	//LPC_ADCHS->POWER_DOWN = 1;	// ADC Power down
 	LPC_GPDMA->C0CONFIG &= ~GPDMA_DMACCxConfig_E;	// stop DMA
 	//LPC_GPDMA->CONFIG = 0;
 	LPC_ADCHS->DSCR_STS = 1;	// change descriptor table for stop adc
-	LPC_ADCHS->POWER_DOWN = 1;	// ADC Power down
+
 }
 
 #ifdef RELEASE

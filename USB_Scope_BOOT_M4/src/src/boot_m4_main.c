@@ -59,6 +59,9 @@ int main(void){
 #ifdef DEBUG
     scope_main();
 #else
+
+    //__WFE();
+
     while(MC_EXCODE_INFO->ExCodeLoaded[EXFUNC_M4] == FALSE);
     ((int(*)())MC_EXCODE_INFO->ExfuncAddr[EXFUNC_M4])();	// execute main();
 #endif
