@@ -7,6 +7,7 @@
 #include "lpc43xx_scu.h"
 //#include "system_LPC43xx.h"
 
+#include "vector_table_cmsis.h"
 #include "boot_mc_shared_mem.h"
 #include "mc_shared_mem.h"
 #include "scope_main.h"
@@ -19,11 +20,93 @@ volatile buffer_t buffer __attribute__ ((section(".bss.$RAM2")));
 
 volatile uint8_t wait_debugger = 0;
 
+void M0CORE_IRQHandler(void);
+
 __attribute__ ((section(".isr_vector")))
 volatile uint32_t pseudo_vectortable[69];	//ベクターテーブル配置用空メモリ
-void ResetISR(void) {
+__attribute__ ((section(".after_vectors")))
+void ResetISR(void) {		// Entry Point
 
 	while(wait_debugger);
+
+	// Disable peripheral clocks
+	LPC_CCU1->CLK_M4_EMCDIV_CFG = 0;
+	LPC_CCU1->CLK_M4_RITIMER_CFG = 0;
+	LPC_CCU1->CLK_M4_USART0_CFG = 0;
+	LPC_CCU1->CLK_M4_USART2_CFG = 0;
+	LPC_CCU1->CLK_M4_USART3_CFG = 0;
+	LPC_CCU1->CLK_M4_SDIO_CFG = 0;
+	LPC_CCU1->CLK_PERIPH_BUS_CFG = 0;
+	LPC_CCU1->CLK_PERIPH_SGPIO_CFG = 0;
+	LPC_CCU1->CLK_PERIPH_CORE_CFG = 0;	// M0Sub disable
+	LPC_CCU1->CLK_APB3_BUS_CFG = 0;
+
+	LPC_CCU2->CLK_APB0_USART0_CFG = 0;	// disable
+	LPC_CCU2->CLK_APB2_USART2_CFG = 0;
+	LPC_CCU2->CLK_APB2_USART3_CFG = 0;
+	LPC_CCU2->CLK_APB0_SSP0_CFG = 0;
+	LPC_CCU2->CLK_APB2_SSP1_CFG = 0;
+	LPC_CCU2->CLK_APB0_UART1_CFG = 0;
+
+	LPC_CCU2->CLK_SDIO_CFG = 0;
+
+
+	CGU_ConfigPWR(CGU_PERIPHERAL_ADC0,DISABLE);
+	CGU_ConfigPWR(CGU_PERIPHERAL_ADC1,DISABLE);
+	CGU_ConfigPWR(CGU_PERIPHERAL_AES,DISABLE);
+	CGU_ConfigPWR(CGU_PERIPHERAL_APB3_BUS,DISABLE);
+
+//	CGU_ConfigPWR(,DISABLE);
+
+	CGU_ConfigPWR(CGU_PERIPHERAL_CAN,DISABLE);
+	CGU_ConfigPWR(CGU_PERIPHERAL_DAC,DISABLE);
+	CGU_ConfigPWR(CGU_PERIPHERAL_EMC,DISABLE);
+	CGU_ConfigPWR(CGU_PERIPHERAL_ETHERNET,DISABLE);
+	CGU_ConfigPWR(CGU_PERIPHERAL_ETHERNET_TX,DISABLE);
+	CGU_ConfigPWR(CGU_PERIPHERAL_I2C1,DISABLE);
+	CGU_ConfigPWR(CGU_PERIPHERAL_I2S,DISABLE);
+	CGU_ConfigPWR(CGU_PERIPHERAL_LCD,DISABLE);
+	CGU_ConfigPWR(CGU_PERIPHERAL_MOTOCON,DISABLE);
+	CGU_ConfigPWR(CGU_PERIPHERAL_QEI,DISABLE);
+	CGU_ConfigPWR(CGU_PERIPHERAL_RITIMER,DISABLE);
+	CGU_ConfigPWR(CGU_PERIPHERAL_SCT,DISABLE);
+	CGU_ConfigPWR(CGU_PERIPHERAL_SDIO,DISABLE);
+	CGU_ConfigPWR(CGU_PERIPHERAL_SSP0,DISABLE);
+	CGU_ConfigPWR(CGU_PERIPHERAL_SSP1,DISABLE);
+	CGU_ConfigPWR(CGU_PERIPHERAL_UART0,DISABLE);
+	CGU_ConfigPWR(CGU_PERIPHERAL_UART1,DISABLE);
+	CGU_ConfigPWR(CGU_PERIPHERAL_UART2,DISABLE);
+	CGU_ConfigPWR(CGU_PERIPHERAL_UART3,DISABLE);
+	CGU_ConfigPWR(CGU_PERIPHERAL_USB1,DISABLE);
+	CGU_ConfigPWR(CGU_PERIPHERAL_WWDT,DISABLE);
+	CGU_ConfigPWR(CGU_PERIPHERAL_EEPROM,DISABLE);
+
+	// DISABLE Entity Clocks
+	//CGU_EnableEntity(,DISABLE);
+	CGU_EnableEntity(CGU_CLKSRC_32KHZ_OSC,DISABLE);
+	CGU_EnableEntity(CGU_CLKSRC_IRC,DISABLE);
+	CGU_EnableEntity(CGU_CLKSRC_ENET_RX_CLK,DISABLE);
+	CGU_EnableEntity(CGU_CLKSRC_ENET_TX_CLK,DISABLE);
+	CGU_EnableEntity(CGU_CLKSRC_GP_CLKIN,DISABLE);
+	CGU_EnableEntity(CGU_BASE_SAFE,DISABLE);
+	CGU_EnableEntity(CGU_BASE_USB1,DISABLE);
+	CGU_EnableEntity(CGU_BASE_PHY_RX,DISABLE);
+	CGU_EnableEntity(CGU_BASE_PHY_TX,DISABLE);
+	CGU_EnableEntity(CGU_BASE_APB3,DISABLE);
+	CGU_EnableEntity(CGU_BASE_LCD,DISABLE);
+	CGU_EnableEntity(CGU_BASE_SDIO,DISABLE);
+	CGU_EnableEntity(CGU_BASE_SSP0,DISABLE);
+	CGU_EnableEntity(CGU_BASE_SSP1,DISABLE);
+	CGU_EnableEntity(CGU_BASE_UART0,DISABLE);
+	CGU_EnableEntity(CGU_BASE_UART1,DISABLE);
+	CGU_EnableEntity(CGU_BASE_UART2,DISABLE);
+	CGU_EnableEntity(CGU_BASE_UART3,DISABLE);
+	CGU_EnableEntity(CGU_BASE_CLKOUT,DISABLE);
+	CGU_EnableEntity(CGU_BASE_OUT0,DISABLE);
+	CGU_EnableEntity(CGU_BASE_OUT1,DISABLE);
+	CGU_EnableEntity(CGU_BASE_PERIPH_CLK,DISABLE);
+	CGU_EnableEntity(CGU_BASE_SPI,DISABLE);
+
 
     //
     //	PLL0 Setup
@@ -179,12 +262,12 @@ void ResetISR(void) {
     // interrupt setting
     //
 
-//	set_new_vtable(M4_BOOTCODE_ADDR,M4_EXCODE_ADDR);
-//	set_handler(M4_EXCODE_ADDR,M0CORE_IRQn,M0CORE_IRQHandler);	// register IPC M0 handler
+	set_new_vtable(M4_BOOTCODE_ADDR,M4_EXCODE_ADDR);
+	set_handler(M4_EXCODE_ADDR,M0CORE_IRQn,M0CORE_IRQHandler);	// register IPC M0 handler
 
     //IPC Interrupt setting
-//    NVIC_EnableIRQ(M0CORE_IRQn);
-//    NVIC_SetPriority(M0CORE_IRQn,100);
+    NVIC_EnableIRQ(M0CORE_IRQn);
+    NVIC_SetPriority(M0CORE_IRQn,100);
     //SysTick_Config(SystemCoreClock/100);
 
     //
@@ -215,9 +298,9 @@ void ResetISR(void) {
     scope_main();
 }
 
-//void M0CORE_IRQHandler(void){
-//	LPC_CREG->M0TXEVENT = 0;	// interrupt flag clear
-//}
+void M0CORE_IRQHandler(void){
+	LPC_CREG->M0TXEVENT = 0;	// interrupt flag clear
+}
 
 void start_adc(void){
 

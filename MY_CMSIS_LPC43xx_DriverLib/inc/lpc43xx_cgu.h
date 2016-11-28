@@ -136,11 +136,12 @@ typedef enum {
 	/* Base */
 	CGU_BASE_SAFE,								/**< Base save clock (always on) for WDT */
 	CGU_BASE_USB0,								/**< USB0 base clock 				*/
-	CGU_BASE_USB1 = CGU_BASE_USB0 + 2,			/**< USB1 base clock 				*/
+	CGU_BASE_PERIPH_CLK,						// M0Sub Base clock for Cortex-M0SUB subsystem, SPI, and SGPIO
+	CGU_BASE_USB1,								/**< USB1 base clock 				*/
 	CGU_BASE_M4,								/**< ARM Cortex-M3 Core base clock 	*/
 	CGU_BASE_SPIFI,								/**< SPIFI base clock				*/
-	//CGU_BASE_SPI,
-	CGU_BASE_PHY_RX = CGU_BASE_SPIFI + 2,		/**< Ethernet PHY Rx base clock		*/
+	CGU_BASE_SPI,
+	CGU_BASE_PHY_RX,							/**< Ethernet PHY Rx base clock		*/
 	CGU_BASE_PHY_TX,							/**< Ethernet PHY Tx base clock		*/
 	CGU_BASE_APB1,								/**< APB peripheral block #1 base clock	*/
 	CGU_BASE_APB3,								/**< APB peripheral block #3 base clock	*/

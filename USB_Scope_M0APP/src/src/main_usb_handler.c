@@ -264,5 +264,7 @@ void reset_sampler_main_loop (){
 	LPC_ADCHS->INTS[1].SET_STAT = HSADC_INT1_THCMP_UCROSS(0) | HSADC_INT1_THCMP_DCROSS(0);	// トリガー検出割り込みフラグセット
 	LPC_GPDMA->CH[0].LLI = 0;
 	LPC_TIMER1->TC = LPC_TIMER1->MR[0];		// Timerインタラプトフラグセット
+
+	__SEV();	// M4 send event
 }
 

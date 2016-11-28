@@ -14,8 +14,6 @@
 #define CHECK_STATUS_UPDATE if(MCV->UpdateFlags > 0)goto loop_end
 int scope_main(void){
 
-	//scope_init();
-
     // ループ制御用変数
 	uint16_t i = 0;
 	uint8_t htrigger_pos_stat = HTRIGGER_POS_MIDDLE_OF_DISPLAY;	// トリガーの位置
@@ -31,7 +29,9 @@ int scope_main(void){
     	//		main loop start
     	//
 
-    	while(MCV->RunningMode==RUNMODE_STOP);
+    	while(MCV->RunningMode==RUNMODE_STOP){
+    		__WFI();
+    	}
     	CHECK_STATUS_UPDATE;
 
     	start_adc();
