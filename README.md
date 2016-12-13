@@ -30,6 +30,12 @@ USB_Scope_M4
 :Firmware transmitted from the host application for LPC4370's m4 core. 
  This program is mainly responsible for controlling the highspeed ADC. 
  This program uses the CMSIS library.  
+
+
+## Related repositorys
+
+DroidOscillo Firmware: https://github.com/aroerina/DroidOscillo-Firmaware  
+DroidOscillo Board: https://github.com/aroerina/DoroidOscillo-Board  
  
 
  
