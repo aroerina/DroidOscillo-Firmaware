@@ -36,8 +36,10 @@ USB_Scope_M4
 
 DroidOscillo Android host: https://github.com/aroerina/DroidOscillo-Android_host  
 DroidOscillo Board: https://github.com/aroerina/DoroidOscillo-Board  
- 
 
+## Wiki
+https://github.com/aroerina/DroidOscillo-Android_host/wiki
+ 
  
 ## Licence
 
