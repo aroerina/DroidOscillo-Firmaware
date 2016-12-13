@@ -4,6 +4,7 @@
 *.dis
 *.bin
 *.map
+*.jtag
+*.xme
+*.dtd
 .metadata/
-Debug/
-Release/
