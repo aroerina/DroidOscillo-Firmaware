@@ -9,5 +9,6 @@
 #define INC_SCOPE_MAIN_H_
 
 int scope_main();
+void auto_timer_handler();
 
 #endif /* INC_SCOPE_MAIN_H_ */

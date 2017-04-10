@@ -73,7 +73,7 @@ const USBD_API_T *g_pUsbApi;
 #define WAITING_ADC_TRANSFER_TICKS   200	// 固定wait
 void set_trigger_timer_regs(uint32_t f_adc,uint32_t f_timer,int16_t trigger_pos,uint32_t sample_length){
 
-	if(MCV->Timescale >= 22){			// クロックが遅い時はタイマープリスケール値セット
+	if(MCV->Timescale >= TIMESCALE_500MS){			// クロックが遅い時はタイマープリスケール値セット
 		LPC_TIMER1->PC = 0;			// Prescale counter reset
 		LPC_TIMER1->PR = 1024 - 1;	// Prescale counter max value set = 1/1024
 		f_timer = f_timer / 1024;
@@ -106,6 +106,12 @@ ErrorCode_t main_usb_handler(USBD_HANDLE_T hUsb, void *usb_data, uint32_t event)
 {
 
 	switch (event) {
+
+
+	case USB_EVT_IN:		// host received data
+		MCV->BufferIsPending = FALSE;
+		break;
+
 	case USB_EVT_OUT_NAK:	// Ready for Packet Receive
 		USBD_API->hw->ReadReqEP(hUsb, HID_EP_OUT, UsbReceiveBuffer, HID_EP_OUT_PACKET_SIZE);
 		break;		// return
@@ -127,26 +133,25 @@ ErrorCode_t main_usb_handler(USBD_HANDLE_T hUsb, void *usb_data, uint32_t event)
 
 					case UPDATE_FLAG_RUNNING_MODE:
 
-						if(data[0] <= 2){ // NORMAL or FREE MODE
-							MCV->RunningMode = *data;
+
+						//
+						//		One Shot 設定
+						//
+						if (data[0] == RUNMODE_SINGLE){
+							MCV->OneShotMode = TRUE;
+							MCV->RunningMode = RUNMODE_NORMAL;
+						} else if (data[0] == RUNMODE_SINGLE_FREE){
+							MCV->OneShotMode = TRUE;
+							MCV->RunningMode = RUNMODE_FREE;
+						} else {
+							MCV->RunningMode = data[0];
 							MCV->OneShotMode = FALSE;
 
 							// ロールモード設定
-							if((MCV->RunningMode == RUNMODE_FREE) && (MCV->Timescale >= 19)){
-								MCV->RoleModeOn = 1;
+							if((MCV->RunningMode == RUNMODE_FREE) && (MCV->Timescale >= ROLEVIEW_SWITCH_TIMESCALE)){
+								MCV->RoleModeOn = TRUE;
 							} else {
-								MCV->RoleModeOn = 0;
-							}
-
-							//
-							//		One Shot 設定
-							//
-						} else if (data[0] >= 3) {
-							MCV->OneShotMode = TRUE;
-							if(data[0] == 3) {	// SINGLEモード
-								MCV->RunningMode = RUNMODE_NORMAL;
-							} else if(data[0] == 4){	// FREE SINGLE モード
-								MCV->RunningMode = RUNMODE_FREE;
+								MCV->RoleModeOn = FALSE;
 							}
 						}
 
@@ -157,7 +162,7 @@ ErrorCode_t main_usb_handler(USBD_HANDLE_T hUsb, void *usb_data, uint32_t event)
 					case UPDATE_FLAG_HORIZON_TRIGGER:
 						MCV->HTrigger = (data[1]<<8) | data[0];
 						// timer match value set
-						uint32_t divE_source_freq = (MCV->Timescale >= 22) ? CRYSTAL_FREQ : USB_FREQ ;
+						uint32_t divE_source_freq = (MCV->Timescale >= TIMESCALE_500MS) ? CRYSTAL_FREQ : USB_FREQ ;
 						uint32_t adc_freq = divE_source_freq / (timescale_div_val[MCV->Timescale].divE_divider * timescale_div_val[MCV->Timescale].desc_div);
 						set_trigger_timer_regs(adc_freq,SystemCoreClock,MCV->HTrigger,MCV->SampleLength);
 
@@ -168,25 +173,27 @@ ErrorCode_t main_usb_handler(USBD_HANDLE_T hUsb, void *usb_data, uint32_t event)
 						MCV->Timescale = *data;
 
 						// サンプル長設定
-						MCV->SampleLength = (MCV->Timescale >= 5)? 800 : sample_length[MCV->Timescale];
+						MCV->SampleLength = (MCV->Timescale >= TIMESCALE_1US)? MCV_BUFFER_SAMPLE_LENGTH : sample_length[MCV->Timescale];
 
 						CHIP_CGU_CLKIN_T divE_clock_source;
 						// ADCクロック源設定
-						divE_clock_source = (MCV->Timescale >= 22)? CLKIN_CRYSTAL : CLKIN_AUDIOPLL ;	//use audio pll
+						divE_clock_source = (MCV->Timescale >= TIMESCALE_500MS)? CLKIN_CRYSTAL : CLKIN_AUDIOPLL ;	//use audio pll
 
 						// Div E divider set
 						Chip_Clock_SetDivider(CLK_IDIV_E, divE_clock_source,timescale_div_val[MCV->Timescale].divE_divider);
 						// set ADCHS Descriptor0 MATCH_VALUE
 						LPC_ADCHS->DESCRIPTOR[0][0] = (1<<31)|(1<<24)|(0x1<<22)|((timescale_div_val[MCV->Timescale].desc_div-1)<<8)|(1<<6)|(0<<0);
 
+
 						// ロールモード設定
-						if((MCV->RunningMode == RUNMODE_FREE) && (MCV->Timescale >= 19)){
+
+						if((MCV->RunningMode == RUNMODE_FREE) && (MCV->Timescale >= ROLEVIEW_SWITCH_TIMESCALE)){
 							MCV->RoleModeOn = 1;
 						} else {
 							MCV->RoleModeOn = 0;
 						}
 
-						uint8_t adchs_speed = (MCV->Timescale >= 5)? 0xE : 0 ;
+						uint8_t adchs_speed = (MCV->Timescale >= TIMESCALE_1US)? 0xE : 0 ;
 						Chip_HSADC_SetSpeed(LPC_ADCHS,0,adchs_speed);
 
 						reset_sampler_main_loop();
@@ -241,7 +248,7 @@ ErrorCode_t main_usb_handler(USBD_HANDLE_T hUsb, void *usb_data, uint32_t event)
 
 
 				if(MCV->RunningMode == RUNMODE_FREE){
-					MCV->RoleModeOn = (MCV->Timescale >= 19)? 1: 0;	// ロールモード設定
+					MCV->RoleModeOn = (MCV->Timescale >= ROLEVIEW_SWITCH_TIMESCALE)? 1: 0;	// ロールモード設定
 
 					if((message != UPDATE_FLAG_TIMESCALE) && (message != UPDATE_FLAG_RUNNING_MODE)){	// M4メインループをリセットしない
 						MCV->UpdateFlags = 0;

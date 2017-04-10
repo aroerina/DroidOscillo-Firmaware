@@ -41,7 +41,7 @@ clean:
 
 post-build:
 	-@echo 'Performing post-build steps'
-	-arm-none-eabi-size "USB_Scope_M0APP.axf" ; arm-none-eabi-objcopy -v -O binary "USB_Scope_M0APP.axf" "USB_Scope_M0APP.bin" ; mv "USB_Scope_M0APP.bin" "m0app.bin" ; cp "m0app.bin" "C:\Dev\project\Android_Oscilloscope\host_app\Android\USBOscilloscopeHost\USBOscilloscopeHost\res\raw" ; # checksum -p LPC4370_M0 -d "USB_Scope_M0APP.bin"
+	-arm-none-eabi-size "USB_Scope_M0APP.axf" ; arm-none-eabi-objcopy -v -O binary "USB_Scope_M0APP.axf" "USB_Scope_M0APP.bin" ; mv "USB_Scope_M0APP.bin" "m0app.bin" ; cp "m0app.bin" "C:\Dev\project\Android_Oscilloscope\host_app\Android\USBOscilloscopeHost\app\src\main\res\raw" ; # checksum -p LPC4370_M0 -d "USB_Scope_M0APP.bin"
 	-@echo ' '
 
 .PHONY: all clean dependents

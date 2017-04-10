@@ -1,11 +1,11 @@
 /*
  * GENERATED FILE - DO NOT EDIT
  * (c) Code Red Technologies Ltd, 2008-2013
- * (c) NXP Semiconductors 2013-2016
+ * (c) NXP Semiconductors 2013-2017
  * Generated linker script file for LPC4370
  * Created from linkscript.ldt by FMCreateLinkLibraries
  * Using Freemarker v2.3.23
- * LPCXpresso v8.2.0 [Build 647] [2016-07-18]  on 2016/11/27 2:33:36
+ * LPCXpresso v8.2.0 [Build 647] [2016-07-18]  on 2017/03/04 20:57:22
  */
 
 INCLUDE "USB_Scope_BOOT_M4_Release_library.ld"

@@ -239,8 +239,6 @@ void m0app_init(USBD_HANDLE_T hUsb){		// リンカのエントリポイントに
 	set_handler(M0_EXCODE_ADDR,I2C0_IRQn,I2C0_IRQHandler);	// register I2C handler
 #endif
 
-
-
 	//送信タイマー起動
 	Chip_TIMER_Init(LPC_TIMER0);
 	SystemCoreClock = 204000000;
@@ -250,26 +248,6 @@ void m0app_init(USBD_HANDLE_T hUsb){		// リンカのエントリポイントに
 	NVIC_SetPriority (TIMER0_IRQn, 80);
 	NVIC_EnableIRQ(TIMER0_IRQn);
 	Chip_TIMER_Enable(LPC_TIMER0);
-
-
-	// gpio setup
-#ifdef LPC_LINK2_OSCILLO_SCOPE
-	//Chip_GPIO_SetDir(LPC_GPIO_PORT,1,0x1F,1);	// GPIO_PORT1 0~4 is OUTPUT
-#else
-
-//	Chip_SCU_PinMuxSet(2,0,FUNC4);						// MUX0 P2_0 FUNC4=GPIO5[0]
-//	Chip_SCU_PinMuxSet(2,1,FUNC4);						// MUX0 P2_1 FUNC4=GPIO5[1]
-//	Chip_SCU_PinMuxSet(2,5,FUNC4);						// DC SWITCH P2_5 FUNC4=GPIO5[5]
-//	Chip_GPIO_SetPinDIROutput(LPC_GPIO_PORT,GPIO_PORT_MUX_S0,GPIO_PIN_MUX_S0);				// MUX S0
-//	Chip_GPIO_SetPinDIROutput(LPC_GPIO_PORT,GPIO_PORT_MUX_S1,GPIO_PIN_MUX_S1);				// MUX S1
-//	Chip_GPIO_SetPinDIROutput(LPC_GPIO_PORT,GPIO_PORT_MUX_A,GPIO_PIN_MUX_A);				// MUX A
-//	Chip_GPIO_SetPinDIROutput(LPC_GPIO_PORT,GPIO_PORT_OPASWITCH,GPIO_PIN_OPASWITCH);		// Low voltage opamp switch
-//	Chip_GPIO_SetPinDIROutput(LPC_GPIO_PORT,GPIO_PORT_LED,GPIO_PIN_LED);					// LED
-
-//	Chip_SCU_PinMuxSet(1,6,FUNC0);					// EEPROM WP
-//	Chip_GPIO_SetPinDIROutput(LPC_GPIO_PORT,GPIO_PORT_EEPROM_WP,GPIO_PIN_EEPROM_WP);
-//	Chip_GPIO_WritePortBit(LPC_GPIO_PORT,GPIO_PORT_EEPROM_WP,GPIO_PIN_EEPROM_WP,false);		// Write Protect disable
-#endif
 
 	// I2C setup
 	Chip_SCU_I2C0PinConfig(I2C0_STANDARD_FAST_MODE);
@@ -290,8 +268,7 @@ void m0app_init(USBD_HANDLE_T hUsb){		// リンカのエントリポイントに
 	pUsbCtrl->ep_event_hdlr[2] = main_usb_handler;	// ep1ハンドラーを書き換え
 	pUsbCtrl->ep_event_hdlr[3] = main_usb_handler;
 
-//	uint8_t tmp = 43;
-//	USBD_API->hw->WriteEP(hUsb,HID_EP_IN,&tmp,1);
+
 
 	while (1) {
 		/* Sleep until next IRQ happens */
@@ -351,33 +328,6 @@ void I2CTransferBlock(uint8_t devAddr,
 	//WaitForI2cXferComplete(&i2cmXferRec);
 }
 
-#ifdef LPC_LINK2_OSCILLO_SCOPE
-/*
- * GPIO接続
- * PORT1_4 : DC SWITCH
- * PORT1_3 : Low voltage opamp switch
- * PORT1_2 : MUX A
- * PORT1_1 : MUX S1
- * PORT1_0 : MUX S0
- */
-#define SWITCH_CONTROL_PORT 1
-
-void setup_input_switches(){
-	uint32_t tmp;
-
-	tmp = MCV->VoltageScale;
-	if(tmp > 7){
-		tmp = 7;
-	}
-
-	uint32_t low_volt_op_en = (tmp & 0b100) >> 2;
-
-	tmp = (((~MCV->DCCut)&0x1) << 4) | (low_volt_op_en<<3) | (tmp & 0b111);
-	Chip_GPIO_SetPortValue(LPC_GPIO_PORT,SWITCH_CONTROL_PORT,tmp);
-}
-
-#else
-
 
 void setup_input_switches(){
 
@@ -401,4 +351,3 @@ void setup_input_switches(){
 	b_tmp = (vs & 0b1)? TRUE : FALSE;
 	Chip_GPIO_WritePortBit(LPC_GPIO_PORT,GPIO_PORT_MUX_S0,GPIO_PIN_MUX_S0,b_tmp);
 }
-#endif

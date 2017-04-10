@@ -4,6 +4,7 @@
 #include "chip.h"
 #include "app_usbd_cfg.h"
 #include "usbd_rom_api.h"
+#include "mc_shared_mem.h"
 
 #define I2C_DAC_ADDR_7BIT       (0x60)	// 7bit 右づめ
 #define I2C_COMMAND_WRITE_VOLATILE_MEMORY 0x2
@@ -19,7 +20,7 @@
 
 #define I2C_BUFFER_SIZE				32		// I2Cリードに使用するバッファ・サイズ
 
-#define NUM_TIMESCALE		24		//タイムスケースの種類の数
+
 
 
 typedef struct{

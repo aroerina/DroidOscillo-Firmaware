@@ -192,7 +192,7 @@
 		<cconfiguration id="com.crt.advproject.config.exe.debug.1614301267.1355815914">
 			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="com.crt.advproject.config.exe.debug.1614301267.1355815914" moduleId="org.eclipse.cdt.core.settings" name="Release">
 				<macros>
-					<stringMacro name="AndroidHostBinaryResourcePath" type="VALUE_PATH_ANY" value="C:\Dev\project\Android_Oscilloscope\host_app\Android\USBOscilloscopeHost\USBOscilloscopeHost\res\raw"/>
+					<stringMacro name="AndroidHostBinaryResourcePath" type="VALUE_PATH_ANY" value="C:\Dev\project\Android_Oscilloscope\host_app\Android\USBOscilloscopeHost\app\src\main\res\raw"/>
 				</macros>
 				<externalSettings/>
 				<extensions>

@@ -182,7 +182,7 @@
 		<cconfiguration id="com.crt.advproject.config.exe.debug.731735556.565591979">
 			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="com.crt.advproject.config.exe.debug.731735556.565591979" moduleId="org.eclipse.cdt.core.settings" name="Release">
 				<macros>
-					<stringMacro name="AndroidAppResourceDir" type="VALUE_PATH_ANY" value="C:\Dev\project\Android_Oscilloscope\host_app\Android\USBOscilloscopeHost\USBOscilloscopeHost\res\raw"/>
+					<stringMacro name="AndroidAppResourceDir" type="VALUE_PATH_ANY" value="C:\Dev\project\Android_Oscilloscope\host_app\Android\USBOscilloscopeHost\app\src\main\res\raw"/>
 				</macros>
 				<externalSettings/>
 				<extensions>
@@ -361,9 +361,7 @@
 		<configuration configurationName="Debug">
 			<resource resourceType="PROJECT" workspacePath="/LPC4370_LEDblinky"/>
 		</configuration>
-		<configuration configurationName="Release">
-			<resource resourceType="PROJECT" workspacePath="/LPC4370_LEDblinky"/>
-		</configuration>
+		<configuration configurationName="Release"/>
 	</storageModule>
 	<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings">
 		<doc-comment-owner id="org.eclipse.cdt.internal.ui.text.doctools.NullDocCommentOwner">

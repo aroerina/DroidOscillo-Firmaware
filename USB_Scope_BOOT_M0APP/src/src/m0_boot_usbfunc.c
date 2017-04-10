@@ -76,6 +76,10 @@ ErrorCode_t HID_EP2_Out_Hdlr(USBD_HANDLE_T hUsb, void *data, uint32_t event)
 	static uint8_t received_program_count=0,num_require_packet;
 
 	switch (event) {
+
+	case USB_EVT_OUT:
+		break;
+
 	case USB_EVT_OUT_NAK:	// Ready for Packet Receive
 		USBD_API->hw->ReadReqEP(hUsb, HID_EP2_OUT, ep2out_receive_buffer, HID_EP2_OUT_PACKET_SIZE);
 

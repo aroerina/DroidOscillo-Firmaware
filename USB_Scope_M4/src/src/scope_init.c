@@ -15,7 +15,7 @@
 #define TESTSIG_ENABLE
 #define DESIRED_TESTSIG_FREQ	10000	// 10khz
 
-volatile GPDMA_LLI_Type adc_first_lli ,adc_second_lli ,adc_third_lli ,adc_4th_lli ,lli_role_view;
+volatile GPDMA_LLI_Type adc_first_lli ,adc_second_lli ,adc_third_lli ,adc_4th_lli ,lli_role_view,auto_free_lli;
 volatile buffer_t buffer __attribute__ ((section(".bss.$RAM2")));
 
 volatile uint8_t wait_debugger = 0;
@@ -165,6 +165,15 @@ void ResetISR(void) {		// Entry Point
     GPDMA_Setup(&dmacfg);
 
     //LPC_GPDMA->C0CONFIG = LPC_GPDMA->C0CONFIG&(~GPDMA_DMACCxConfig_ITC);	// ADCHS Channel GPDMA Interrupt Disable
+	LPC_GPDMA->INTTCCLEAR = -1;	// Terminal Count Interrupt flag clear
+	LPC_GPDMA->INTERRCLR = -1;	// Error Interrupt flag clear
+
+    //GPDMA_ChannelCmd(0,ENABLE);		//DMA Channel0 Enable
+
+
+    //
+    //	DMA Linked list definitions
+    //
 
     // 最初に読み込まれるLLI(二回目からは不要)
     // Channel Interrupt がENABLEになってる
@@ -193,6 +202,11 @@ void ResetISR(void) {		// Entry Point
     lli_role_view.Control = DMA_SET_TRANSFER_SIZE(LPC_GPDMA->C0CONTROL,SAMPLE_SIZE_WORD);
     lli_role_view.NextLLI = (uint32_t)&lli_role_view;
 
+    // オートフリー用LLI 水平トリガーが画面内、もしくは画面外右側の時に使用する
+    auto_free_lli.SrcAddr = dmacfg.SrcMemAddr;
+    auto_free_lli.NextLLI = (uint32_t)&adc_second_lli;
+
+
 
     MCV->BufferIsPending = FALSE;
     MCV->RunningMode = RUNMODE_STOP;
@@ -200,11 +214,19 @@ void ResetISR(void) {		// Entry Point
     //
     //	Timer configuration
     //
+    // TIMER0 : 16ms sample transmit timer (M0APP)
+    // TIMER1 : ADC stop timer (M4)
+    // TIMER2 : AUTO MODE timer (M4)
+    // TIMER3 : Probe adjust signal generation (M4)
+
+    //
+    // TIMER1 ADC Stop timer config
+    //
 
     TIM_TIMERCFG_Type tconfig;
     tconfig.PrescaleOption = TIM_PRESCALE_TICKVAL;
     tconfig.PrescaleValue = 1;
-    TIM_Init(LPC_TIMER1,TIM_TIMER_MODE,&tconfig);
+    TIM_Init(ADC_STOP_TIMER,TIM_TIMER_MODE,&tconfig);
 
     TIM_MATCHCFG_Type mconfig;
     mconfig.MatchChannel = 0;
@@ -213,35 +235,44 @@ void ResetISR(void) {		// Entry Point
     mconfig.ResetOnMatch = ENABLE;
     mconfig.MatchValue = 1000;
     mconfig.ExtMatchOutputType = TIM_EXTMATCH_NOTHING;
-    TIM_ConfigMatch(LPC_TIMER1,&mconfig);
+    TIM_ConfigMatch(ADC_STOP_TIMER,&mconfig);
+    ADC_STOP_TIMER->IR = 0x1;
 
-    //Interrupt Enable Setting
-    //NVIC_SetPriority(DMA_IRQn,13);
-    //NVIC_EnableIRQ(DMA_IRQn);
+    //
+    // TIMER2 AUTO MODE Timer
+    //
 
-	LPC_GPDMA->INTTCCLEAR = -1;	// Terminal Count Interrupt flag clear
-	LPC_GPDMA->INTERRCLR = -1;	// Error Interrupt flag clear
+    tconfig.PrescaleOption = TIM_PRESCALE_TICKVAL;
+    tconfig.PrescaleValue = SystemCoreClock / 1000;		// count up per 1ms
+    TIM_Init(AUTO_MODE_TIMER,TIM_TIMER_MODE,&tconfig);
 
-    //GPDMA_ChannelCmd(0,ENABLE);		//DMA Channel0 Enable
 
-    LPC_TIMER1->IR = 0x1;
+    mconfig.MatchChannel = 0;
+    mconfig.IntOnMatch = ENABLE;
+    mconfig.StopOnMatch = ENABLE;
+    mconfig.ResetOnMatch = ENABLE;
+    mconfig.MatchValue = 1000;		// * 1ms
+    mconfig.ExtMatchOutputType = TIM_EXTMATCH_NOTHING;
+    TIM_ConfigMatch(AUTO_MODE_TIMER,&mconfig);
+    AUTO_MODE_TIMER->IR = 0x1;
 
 
 #ifdef TESTSIG_ENABLE
-    // Test signal output setting
-     TIM_TIMERCFG_Type config_testsig;
-     config_testsig.PrescaleOption = TIM_PRESCALE_TICKVAL;
-     config_testsig.PrescaleValue = 1;
-     TIM_Init(LPC_TIMER3,TIM_TIMER_MODE,&config_testsig);
+    //
+    // Probe adjust signal output setting	TIMER3
+    //
 
-     TIM_MATCHCFG_Type mconfig_testsig;
-     mconfig_testsig.MatchChannel = 0;
-     mconfig_testsig.IntOnMatch = DISABLE;
-     mconfig_testsig.StopOnMatch = DISABLE;
-     mconfig_testsig.ResetOnMatch = ENABLE;
-     mconfig_testsig.MatchValue = SystemCoreClock/(DESIRED_TESTSIG_FREQ*2);
-     mconfig_testsig.ExtMatchOutputType = TIM_EXTMATCH_TOGGLE;
-     TIM_ConfigMatch(LPC_TIMER3,&mconfig_testsig);
+     tconfig.PrescaleOption = TIM_PRESCALE_TICKVAL;
+     tconfig.PrescaleValue = 1;
+     TIM_Init(TEST_SIGNAL_TIMER,TIM_TIMER_MODE,&tconfig);
+
+     mconfig.MatchChannel = 0;
+     mconfig.IntOnMatch = DISABLE;
+     mconfig.StopOnMatch = DISABLE;
+     mconfig.ResetOnMatch = ENABLE;
+     mconfig.MatchValue = SystemCoreClock/(DESIRED_TESTSIG_FREQ*2);
+     mconfig.ExtMatchOutputType = TIM_EXTMATCH_TOGGLE;
+     TIM_ConfigMatch(TEST_SIGNAL_TIMER,&mconfig);
 
      //LPC4370 TFBGA100 TIMER3 MATCH0 OUTPUT = P2_3 (D8)
 
@@ -264,11 +295,15 @@ void ResetISR(void) {		// Entry Point
 
 	set_new_vtable(M4_BOOTCODE_ADDR,M4_EXCODE_ADDR);
 	set_handler(M4_EXCODE_ADDR,M0CORE_IRQn,M0CORE_IRQHandler);	// register IPC M0 handler
+	set_handler(M4_EXCODE_ADDR,TIMER2_IRQn,auto_timer_handler);	// register TIMER2 handler
 
     //IPC Interrupt setting
     NVIC_EnableIRQ(M0CORE_IRQn);
     NVIC_SetPriority(M0CORE_IRQn,100);
-    //SysTick_Config(SystemCoreClock/100);
+
+    //Timer2 interrupt Enable Setting
+    NVIC_SetPriority(TIMER2_IRQn,13);
+    NVIC_EnableIRQ(TIMER2_IRQn);
 
     //
     //	ADCHS Register Setup
