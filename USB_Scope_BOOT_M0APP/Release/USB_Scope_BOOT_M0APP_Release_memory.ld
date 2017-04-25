@@ -1,11 +1,11 @@
 /*
  * GENERATED FILE - DO NOT EDIT
  * (c) Code Red Technologies Ltd, 2008-2013
- * (c) NXP Semiconductors 2013-2016
+ * (c) NXP Semiconductors 2013-2017
  * Generated linker script file for LPC4370-M0
  * Created from memory.ldt by FMCreateLinkMemory
  * Using Freemarker v2.3.23
- * LPCXpresso v8.2.0 [Build 647] [2016-07-18]  on 2016/11/16 0:23:41
+ * LPCXpresso v8.2.2 [Build 650] [2016-09-09]  on 2017/04/16 17:58:39
  */
 
 MEMORY

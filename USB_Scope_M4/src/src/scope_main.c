@@ -6,6 +6,10 @@
 #include "mc_shared_mem.h"
 #include "scope_init.h"
 #include "scope_main.h"
+#include "lpc43xx_gpio.h"
+
+#define GPIO_PORT_LED		0
+#define GPIO_PIN_LED		15
 
 #define HTRIGGER_POS_LEFT_OF_DISPLAY	2	// 水平トリガーは画面の外左側
 #define HTRIGGER_POS_RIGHT_OF_DISPLAY	1	// 水平トリガーは画面の外右側
@@ -338,6 +342,7 @@ loop_end:
     	} else if(MCV->OneShotMode == TRUE){		// SINGLEモードでトリガーした後の処理
 
 			MCV->RunningMode = RUNMODE_STOP;		// STOPにする
+			GPIO_ClearValue(GPIO_PORT_LED,1<<GPIO_PIN_LED);	// LED OFF
 
 		}
 

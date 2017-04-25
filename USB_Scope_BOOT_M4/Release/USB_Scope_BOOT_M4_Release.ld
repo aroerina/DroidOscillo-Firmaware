@@ -5,7 +5,7 @@
  * Generated linker script file for LPC4370
  * Created from linkscript.ldt by FMCreateLinkLibraries
  * Using Freemarker v2.3.23
- * LPCXpresso v8.2.0 [Build 647] [2016-07-18]  on 2017/03/04 20:57:22
+ * LPCXpresso v8.2.2 [Build 650] [2016-09-09]  on 2017/04/16 17:58:33
  */
 
 INCLUDE "USB_Scope_BOOT_M4_Release_library.ld"

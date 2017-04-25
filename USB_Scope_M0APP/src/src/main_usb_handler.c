@@ -107,6 +107,10 @@ ErrorCode_t main_usb_handler(USBD_HANDLE_T hUsb, void *usb_data, uint32_t event)
 
 	switch (event) {
 
+	case USB_EVT_IN_STALL:
+	case USB_EVT_OUT_STALL:
+		while(1);
+
 
 	case USB_EVT_IN:		// host received data
 		MCV->BufferIsPending = FALSE;
@@ -133,10 +137,6 @@ ErrorCode_t main_usb_handler(USBD_HANDLE_T hUsb, void *usb_data, uint32_t event)
 
 					case UPDATE_FLAG_RUNNING_MODE:
 
-
-						//
-						//		One Shot 設定
-						//
 						if (data[0] == RUNMODE_SINGLE){
 							MCV->OneShotMode = TRUE;
 							MCV->RunningMode = RUNMODE_NORMAL;
@@ -153,6 +153,14 @@ ErrorCode_t main_usb_handler(USBD_HANDLE_T hUsb, void *usb_data, uint32_t event)
 							} else {
 								MCV->RoleModeOn = FALSE;
 							}
+						}
+
+						// LED set
+						// Running = ON ,Stop = OFF
+						if(MCV->RunningMode != RUNMODE_STOP){
+							set_LED_state(TRUE);
+						} else {
+							set_LED_state(FALSE);
 						}
 
 

@@ -328,13 +328,15 @@ void I2CTransferBlock(uint8_t devAddr,
 	//WaitForI2cXferComplete(&i2cmXferRec);
 }
 
+void set_LED_state(bool state){	// TRUE = LED ON
+	Chip_GPIO_WritePortBit(LPC_GPIO_PORT,GPIO_PORT_LED,GPIO_PIN_LED,state);
+}
+
 
 void setup_input_switches(){
 
 	// DC Switch
 	Chip_GPIO_WritePortBit(LPC_GPIO_PORT,GPIO_PORT_DCSWITCH,GPIO_PIN_DCSWITCH,!(MCV->DCCut));
-	// Debug
-	Chip_GPIO_WritePortBit(LPC_GPIO_PORT,GPIO_PORT_LED,GPIO_PIN_LED,!(MCV->DCCut));
 
 	uint8_t vs = (MCV->VoltageScale > 7)? 7 : MCV->VoltageScale;
 	// Low voltage opamp switch
