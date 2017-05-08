@@ -249,6 +249,11 @@ ErrorCode_t main_usb_handler(USBD_HANDLE_T hUsb, void *usb_data, uint32_t event)
 						USBD_API->hw->WriteEP(g_hUsb, HID_EP_IN, (uint8_t*)MCV->Buffer, read_bytes);		// USB送信
 						break;
 
+					case MESSAGE_IS_CONFIGURED:	// ファームウェア書き込み済みかどうか
+						message = 0xff;
+						USBD_API->hw->WriteEP(g_hUsb, HID_EP_IN, &message,1);		// てきとうに1バイト送信
+						break;
+
 
 					default:
 						break;

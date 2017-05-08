@@ -33,6 +33,7 @@ extern uint16_t sample_length[5];
 extern const USBD_API_T *g_pUsbApi;
 extern USBD_HANDLE_T g_hUsb;
 
+void set_LED_state(bool);
 void m0app_init();
 void setup_input_switches();
 void I2CTransfer(uint8_t devAddr,uint8_t *txBuffPtr,uint16_t txSize,uint8_t *rxBuffPtr,uint16_t rxSize);
